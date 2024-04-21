@@ -2,7 +2,7 @@ import sys
 import csv
 import urllib.parse
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import *
 from PyQt5.QtGui import QDesktopServices
 
 class MyWindow(QMainWindow):
@@ -22,6 +22,8 @@ class MyWindow(QMainWindow):
         # connect action buttons to functions
         save = QAction("Save", self)
         save.triggered.connect(self.menu_save)
+        load = QAction("Load", self)
+        load.triggered.connect(self.menu_load)
         quit = QAction("Quit", self)
         quit.triggered.connect(self.menu_quit)
         map = QAction("Map", self)
@@ -29,6 +31,7 @@ class MyWindow(QMainWindow):
 
         # add action buttons to menubar
         filemenu.addAction(save)
+        filemenu.addAction(load)
         filemenu.addAction(quit)
         viewmenu.addAction(map)
         
@@ -50,11 +53,14 @@ class MyWindow(QMainWindow):
         self.landComboBox.addItems(["Schweiz", "Deutschland", "Österreich"])
         
         # build button
-        self.button1 = QPushButton("Speichern")
-        self.button1.clicked.connect(self.write_file)
+        self.buttonMap = QPushButton("Auf Karte zeigen")
+        self.buttonMap.clicked.connect(self.view_map)
         
-        self.button2 = QPushButton("Auf Karte zeigen")
-        self.button2.clicked.connect(self.view_map)
+        self.buttonLoad = QPushButton("Laden")
+        self.buttonLoad.clicked.connect(self.load_file)        
+        
+        self.buttonSave = QPushButton("Speichern")
+        self.buttonSave.clicked.connect(self.write_file)
         
         # add layout fields
         layout.addRow("Vorname:", self.vornameLineEdit)
@@ -64,10 +70,9 @@ class MyWindow(QMainWindow):
         layout.addRow("Postleitzahl:", self.plzLineEdit)
         layout.addRow("Ort:", self.ortLineEdit)
         layout.addRow("Land:", self.landComboBox)
-        layout.addRow(self.button1)
-        layout.addRow(self.button2)
-        
-        
+        layout.addRow(self.buttonLoad)
+        layout.addRow(self.buttonSave)
+        layout.addRow(self.buttonMap)
         
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -82,6 +87,12 @@ class MyWindow(QMainWindow):
     # menu bar functions    
     def menu_save(self):
         self.write_file()
+        
+    def menu_load(self):
+        self.load_file()
+        
+    def menu_load(self):
+        self.load_file()
 
     def menu_quit(self):
         self.close()  
@@ -108,10 +119,31 @@ class MyWindow(QMainWindow):
         writer.writerow(formfields)
         file.close()
         
+    def load_file(self):
+        
+        formfields = []
+        
+        # read array from csv file
+        file = open("output.csv", "r", encoding="utf-8")
+        reader = csv.reader(file, delimiter=",", lineterminator="\n")
+        for row in reader:
+            formfields = row
+        file.close()
+        
+        # fill form with array data
+        self.vornameLineEdit.setText(formfields[0]) 
+        self.nameLineEdit.setText(formfields[1])
+        self.adresseLineEdit.setText(formfields[3])
+        self.plzLineEdit.setText(formfields[4])
+        self.ortLineEdit.setText(formfields[5])
+        self.landComboBox.setCurrentText(formfields[6])
+        
+        dformat = QLocale().dateFormat(format=QLocale.FormatType.ShortFormat) 
+        self.datumDateEdit.setDate(QDate.fromString(formfields[2], dformat))
+        
     def view_map(self):
         
         url = 'https://www.google.ch/maps/place/'
-        
         
         if self.adresseLineEdit.text():
             url += self.adresseLineEdit.text() + '+'
